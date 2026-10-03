@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FloodSight – Mapping flood damage from space</title>
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<nav><a class="brand" href="#top">FloodSight</a>
+  <div><a href="#problem">Problem</a><a href="#pipeline">How it works</a><a href="#demo">Live demo</a><a href="#impact">Impact</a><a href="#build">Build plan</a></div></nav>
+
+<section class="hero" id="top">
+  <svg class="bg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs><filter id="hs"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2"/><feColorMatrix values="0 0 0 0 .5 0 0 0 0 .55 0 0 0 0 .6 0 0 0 .5 0"/></filter></defs>
+    <rect width="1200" height="700" fill="#2B3238"/><rect width="1200" height="700" filter="url(#hs)"/>
+    <path id="river" fill="#2F8FD8" fill-opacity=".55" stroke="#7fc0f5" stroke-width="2"/>
+  </svg>
+  <div class="inner">
+    <h1>When the roads are gone, the satellite still sees.</h1>
+    <p>FloodSight turns one radar pass into a rescue map: what the water destroyed, which villages are cut off, and where help should go first.</p>
+    <a class="cta" href="#demo">Open the live demo</a>
+    <small>Built for the IIT Mandi Hackathon, Track B: Mapping Flood Damage from Space.</small>
+  </div>
+</section>
+
+<section id="problem" class="band">
+  <h2>Rescuers are blind at the worst moment</h2>
+  <div class="cols">
+    <p><b>Ground reports stop.</b> Phone lines fail with the first surge, so the people who most need help are the ones who can no longer ask for it.</p>
+    <p><b>Damage is invisible.</b> No one knows which bridges still stand or which roads are under water until a team drives there and turns back.</p>
+    <p><b>Hours are lost.</b> Cloud cover blocks ordinary satellite photos, so aid goes to the villages that are easiest to see, not the ones most cut off.</p>
+  </div>
+</section>
+
+<section id="pipeline" class="band alt">
+  <h2>From one satellite pass to a ranked rescue list</h2>
+  <ol class="steps">
+    <li><b>Capture.</b> Sentinel-1 radar sees through clouds and night. We compare a pre-flood and a during-flood image.</li>
+    <li><b>Find the water.</b> Pixels that turned dark become a flood mask, using change detection or a U-Net trained on Sen1Floods11.</li>
+    <li><b>Count the damage.</b> The mask is laid over OpenStreetMap roads and bridges to mark each one open or lost.</li>
+    <li><b>Find who is cut off.</b> A road graph with the lost links removed shows which villages can no longer reach a hospital or camp.</li>
+    <li><b>Rank and deliver.</b> Villages are ranked by population and vulnerability, then exported as an offline map for field teams.</li>
+  </ol>
+</section>
+
+<section id="demo" class="demo">
+  <div class="dhead"><h2>Try it: raise the water</h2>
+    <p>This is a simulated district. The analysis below is real code: it breaks the roads the flood touches and recomputes who can still be reached.</p></div>
+  <main>
+    <aside class="rail">
+      <h3>Flood scenario</h3>
+      <div class="presets">
+        <button data-l="0">Pre-flood</button><button data-l="35">Moderate</button>
+        <button data-l="65">Severe</button><button data-l="95">Extreme</button>
+      </div>
+      <label class="sl">Flood level <output id="lv">0</output>%
+        <input id="level" type="range" min="0" max="100" value="0" aria-label="Flood level"></label>
+      <button id="play" class="primary">Play flood rise</button>
+      <h3>Layers</h3>
+      <label><input type="checkbox" id="L_sar" checked> Radar backscatter</label>
+      <label><input type="checkbox" id="L_flood" checked> Flood extent</label>
+      <label><input type="checkbox" id="L_pre" checked> Normal river outline</label>
+      <label><input type="checkbox" id="L_road" checked> Roads and bridges</label>
+      <h3>Impact</h3>
+      <dl id="stats"></dl>
+      <button id="export">Download GeoJSON</button>
+    </aside>
+    <section class="mapwrap">
+      <svg id="map" viewBox="0 0 900 560" role="img" aria-label="Flood damage map"></svg>
+      <div class="legend">
+        <i class="c-ok"></i>Reachable <i class="c-cut"></i>Cut off <i class="c-fl"></i>Under water
+        <i class="c-camp"></i>Hospital or camp <i class="c-br"></i>Bridge
+      </div>
+      <p id="hint">Select a village to see its status and the best route to help.</p>
+    </section>
+    <aside class="rail">
+      <h3>Rescue priority</h3>
+      <ol id="prio"></ol>
+      <div id="detail" class="detail"></div>
+    </aside>
+  </main>
+</section>
+
+<section id="impact" class="band">
+  <h2>Hours saved before the first boat leaves</h2>
+  <p class="lead">Illustrative estimate of time to a usable damage and isolation picture.</p>
+  <div class="bars">
+    <div><span>Ground survey</span><i style="--w:96%"></i><b>about 96 h</b></div>
+    <div><span>FloodSight</span><i class="f" style="--w:12%"></i><b>about 12 h</b></div>
+  </div>
+  <div class="cols">
+    <p><b>Faster response.</b> Maps follow the satellite pass, not the first road crew.</p>
+    <p><b>Fairer targeting.</b> Cut-off villages are ranked by need, not by visibility.</p>
+    <p><b>Safer teams.</b> Crews learn which bridges are lost before they set out.</p>
+  </div>
+</section>
+
+<section id="build" class="band alt">
+  <h2>What we build next</h2>
+  <div class="cols two">
+    <div><h3>Stack</h3><p>Python, FastAPI, Rasterio, GeoPandas, OSMnx and NetworkX for analysis. PyTorch U-Net for water segmentation. MapLibre front end with offline GeoJSON and PDF export. Data: Sentinel-1/2, SRTM DEM, OpenStreetMap, WorldPop, ISRO Bhuvan.</p></div>
+    <div><h3>Roadmap</h3><p><b>Now:</b> simulated district and working isolation logic. <b>Next:</b> replay a real flood such as Kerala 2018 end to end. <b>Later:</b> DEM-based spread forecasts and alerts to district teams, then cyclones and landslides.</p></div>
+  </div>
+</section>
+
+<footer>FloodSight by team Logic Grid. Prototype data is simulated; see README for the production pipeline.</footer>
+<script src="app.js"></script>
+<script>
+// Hero: the river widens once on load, echoing the demo.
+(function(){const p=document.getElementById('river');const ry=x=>350+90*Math.sin(x/170);
+const f=l=>{let t=[],b=[];for(let x=0;x<=1200;x+=20){const w=l*(0.7+0.3*Math.sin(x/110+1));t.push(x+','+(ry(x)-w));b.unshift(x+','+(ry(x)+w));}return'M'+t.join('L')+'L'+b.join('L')+'Z';};
+let l=6;p.setAttribute('d',f(l));if(matchMedia('(prefers-reduced-motion:reduce)').matches){p.setAttribute('d',f(110));return;}
+const id=setInterval(()=>{l+=1.2;p.setAttribute('d',f(l));if(l>=110)clearInterval(id);},30);})();
+</script>
+</body></html>
